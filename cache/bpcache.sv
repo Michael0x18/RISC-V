@@ -29,7 +29,7 @@ module bpcache(
 	output reg branch, // Active high branch signal. Asserted high if the predictor thinks a branch should take place.
 	
 	input wire[7:0] w_addr,	// Lowest 8 bits of address of branch instruction to update
-	input wire[7:0] did_branch, // Active high if the specified branch instruction did actually branch.
+	input wire did_branch, // Active high if the specified branch instruction did actually branch.
 	input wire we			// Active high WE
 );
 
@@ -57,11 +57,13 @@ always @(posedge clk, negedge rst_n) begin
 		end
 	end else if(we) begin
 		if(did_branch) begin
+			$strobe("test");
+			$display("update");
 			// Increment and saturate
-			arr[addr] <= arr[addr]==2'b11 ? 2'b11 : arr[addr]+1;
+			arr[w_addr] <= arr[w_addr]==2'b11 ? 2'b11 : arr[w_addr]+1;
 		end else begin
 			// Decrement and saturate
-			arr[addr] <= arr[addr]==2'b00 ? 2'b00 : arr[addr]-1;
+			arr[w_addr] <= arr[w_addr]==2'b00 ? 2'b00 : arr[w_addr]-1;
 		end
 	end
 end
