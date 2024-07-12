@@ -97,10 +97,216 @@ initial begin
 			$display("Branch did not correctly move to weak not taken state %x", bp.arr[i][1]);
 			$finish();
 		end
-		
+	end
+
+	// Test saturation. Take another branch at each state. This should switch to the strong taken state
+	@(negedge clk);
+
+	for(i = 0; i < 255; ++i) begin
+		// Attempt to write there
+		w_addr = i;
+		did_branch = 1'b1;
+		we = 1'b1;
+		@(negedge clk); // Let it update
+		we = 1'b0;
+		// Need to wait another clock cycle since we have sync reads
+		addr = i;
+		@(negedge clk);
+		if(branch !== 1'b1) begin
+			$display("Branch did not correctly move to weak taken state %x", bp.arr[i][1]);
+			$finish();
+		end
+
+	end
+
+	@(negedge clk);
+
+	// Strong taken
+	for(i = 0; i < 255; ++i) begin
+		// Attempt to write there
+		w_addr = i;
+		did_branch = 1'b1;
+		we = 1'b1;
+		@(negedge clk); // Let it update
+		we = 1'b0;
+		// Need to wait another clock cycle since we have sync reads
+		addr = i;
+		@(negedge clk);
+		if(branch !== 1'b1) begin
+			$display("Branch did not correctly move to strong taken state %x", bp.arr[i][1]);
+			$finish();
+		end
+
+	end
+
+	@(negedge clk);
+
+	// Saturate at strong twice
+	for(i = 0; i < 255; ++i) begin
+		// Attempt to write there
+		w_addr = i;
+		did_branch = 1'b1;
+		we = 1'b1;
+		@(negedge clk); // Let it update
+		we = 1'b0;
+		// Need to wait another clock cycle since we have sync reads
+		addr = i;
+		@(negedge clk);
+		if(branch !== 1'b1) begin
+			$display("Branch did not correctly saturate in strong taken state %x", bp.arr[i][1]);
+			$finish();
+		end
+
+	end
+	@(negedge clk);
+	for(i = 0; i < 255; ++i) begin
+		// Attempt to write there
+		w_addr = i;
+		did_branch = 1'b1;
+		we = 1'b1;
+		@(negedge clk); // Let it update
+		we = 1'b0;
+		// Need to wait another clock cycle since we have sync reads
+		addr = i;
+		@(negedge clk);
+		if(branch !== 1'b1) begin
+			$display("Branch did not correctly saturate in strong taken state %x", bp.arr[i][1]);
+			$finish();
+		end
+
+	end
+
+	// Back it off
+	@(negedge clk);
+	for(i = 0; i < 255; ++i) begin
+		// Attempt to write there
+		w_addr = i;
+		did_branch = 1'b0;
+		we = 1'b1;
+		@(negedge clk); // Let it update
+		we = 1'b0;
+		// Need to wait another clock cycle since we have sync reads
+		addr = i;
+		@(negedge clk);
+		if(branch !== 1'b1) begin
+			$display("Branch did not correctly move to weak taken state %x", bp.arr[i][1]);
+			$finish();
+		end
+
+	end
+	// Back it off again - should be weak not taken now
+	@(negedge clk);
+	for(i = 0; i < 255; ++i) begin
+		// Attempt to write there
+		w_addr = i;
+		did_branch = 1'b0;
+		we = 1'b1;
+		@(negedge clk); // Let it update
+		we = 1'b0;
+		// Need to wait another clock cycle since we have sync reads
+		addr = i;
+		@(negedge clk);
+		if(branch !== 1'b0) begin
+			$display("Branch did not correctly move to weak not taken state %x", bp.arr[i][1]);
+			$finish();
+		end
+
+	end
+
+	// Back it off again - should be strong not taken now
+	@(negedge clk);
+	for(i = 0; i < 255; ++i) begin
+		// Attempt to write there
+		w_addr = i;
+		did_branch = 1'b0;
+		we = 1'b1;
+		@(negedge clk); // Let it update
+		we = 1'b0;
+		// Need to wait another clock cycle since we have sync reads
+		addr = i;
+		@(negedge clk);
+		if(branch !== 1'b0) begin
+			$display("Branch did not correctly move to strong not taken state %x", bp.arr[i][1]);
+			$finish();
+		end
+
+	end
+
+	// Saturate at low - should be strong not taken still
+	@(negedge clk);
+	for(i = 0; i < 255; ++i) begin
+		// Attempt to write there
+		w_addr = i;
+		did_branch = 1'b0;
+		we = 1'b1;
+		@(negedge clk); // Let it update
+		we = 1'b0;
+		// Need to wait another clock cycle since we have sync reads
+		addr = i;
+		@(negedge clk);
+		if(branch !== 1'b0) begin
+			$display("Branch did not correctly move to strong not taken state %x", bp.arr[i][1]);
+			$finish();
+		end
+
 	end
 	
+	// Weak not taken
+	for(i = 0; i < 255; ++i) begin
+		// Attempt to write there
+		w_addr = i;
+		did_branch = 1'b1;
+		we = 1'b1;
+		@(negedge clk); // Let it update
+		we = 1'b0;
+		// Need to wait another clock cycle since we have sync reads
+		addr = i;
+		@(negedge clk);
+		if(branch !== 1'b0) begin
+			$display("Branch did not correctly move to weak not taken state %x", bp.arr[i][1]);
+			$finish();
+		end
+
+	end
+
+	// weak taken
+	for(i = 0; i < 255; ++i) begin
+		// Attempt to write there
+		w_addr = i;
+		did_branch = 1'b1;
+		we = 1'b1;
+		@(negedge clk); // Let it update
+		we = 1'b0;
+		// Need to wait another clock cycle since we have sync reads
+		addr = i;
+		@(negedge clk);
+		if(branch !== 1'b1) begin
+			$display("Branch did not correctly move to weak taken state %x", bp.arr[i][1]);
+			$finish();
+		end
+
+	end
 	
+	// Strong taken
+	for(i = 0; i < 255; ++i) begin
+		// Attempt to write there
+		w_addr = i;
+		did_branch = 1'b1;
+		we = 1'b1;
+		@(negedge clk); // Let it update
+		we = 1'b0;
+		// Need to wait another clock cycle since we have sync reads
+		addr = i;
+		@(negedge clk);
+		if(branch !== 1'b1) begin
+			$display("Branch did not correctly move to strong taken state %x", bp.arr[i][1]);
+			$finish();
+		end
+
+	end
+
+
+
 
 	$display("Yahoo! All tests passed!");
 	$finish();

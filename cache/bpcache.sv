@@ -57,8 +57,6 @@ always @(posedge clk, negedge rst_n) begin
 		end
 	end else if(we) begin
 		if(did_branch) begin
-			$strobe("test");
-			$display("update");
 			// Increment and saturate
 			arr[w_addr] <= arr[w_addr]==2'b11 ? 2'b11 : arr[w_addr]+1;
 		end else begin
