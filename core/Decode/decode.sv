@@ -21,7 +21,7 @@ module decode(
 
 	output reg[31:0] RD1,
 	output reg[31:0] RD2,
-	output reg[31:0] PCD,
+	output reg[31:0] PCD_,
 	output reg[4:0] Rs1D,
 	output reg[4:0] Rs2D,
 	output reg[31:0] ImmExtD,
