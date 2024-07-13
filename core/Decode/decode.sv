@@ -17,7 +17,7 @@ module decode(
 	output wire BranchD,
 	output wire[2:0] ALUControlD,
 	output wire ALUSrcD,
-	output wire[1:0] ImmSRCD
+	output wire[1:0] ImmSRCD,
 
 	output reg[31:0] RD1,
 	output reg[31:0] RD2,
