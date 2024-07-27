@@ -115,9 +115,6 @@ always @(posedge clk, negedge rst_n) begin
 	end
 end
 
-logic[31:0] next_addr_tmp;
-assign next_addr = {32{rst_n}} & next_addr_tmp;
-
 // TODO TODO TODO set branch target address based on decoded immediate values
 // and curr_addr
 
@@ -132,13 +129,13 @@ always_comb begin
 	PC_fp4=curr_addr+4;
 	// Insert NO-OP into pipeline
 	// ADD x0, x0, x0
-	next_addr_tmp=curr_addr; // Assume pipeline stall
+	next_addr=curr_addr; // Assume pipeline stall
 	instruction = 32'b0000000_00000_00000_000_00000_0110011;
 	if(mispredict_en) begin
 		// We have mispredicted in the past; need to correct this.
 		// All signals default to zero. Only one we need to change
 		// is the next instruction address
-		next_addr_tmp=mispredict_override_addr;
+		next_addr=mispredict_override_addr;
 		// Override that with the actual address the branch went to
 	end else if (istall | mstall) begin
 		// If either the instruction cache or the data cache experiences
@@ -157,9 +154,7 @@ always_comb begin
 		instruction = instruction_ic;
 		branch_prediction = branch_prediction_extra;
 		if(branch_prediction_extra) begin
-			next_addr_tmp = branch_target;
-		end else begin
-			next_addr_tmp = PC_fp4;
+			next_addr = branch_target;
 		end
 	end
 	
