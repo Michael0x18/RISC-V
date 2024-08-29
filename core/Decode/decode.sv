@@ -1,3 +1,8 @@
+// TODO for Aug 31 weekend:
+// - Write immediate decoder
+// - Fan out the rest of the signals
+// - Poison!! IMPORTANT TO HAVE
+
 `default_nettype none
 module decode(
 	input wire clk,

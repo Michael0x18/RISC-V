@@ -1,3 +1,13 @@
+// TODO for AUG 31 weekend:
+// - Fully implement the cache as a meta-cache that can actually be backed by
+// any of the following:
+// 	 - Dummy cache: Does what it currently does
+// 	 - Harvard architecture: Is its own memory
+// 	 - Standard Level 1 instruction cache
+//
+// - Implement the Harvard Arch - write and embed a test program that will use
+// the debug instructions to print to the console
+
 `default_nettype none
 module fetch(
 	// GLOBAL CLOCK AND RESET
