@@ -3,6 +3,9 @@
 // - Fan out the rest of the signals
 // - Poison!! IMPORTANT TO HAVE
 
+
+
+
 `default_nettype none
 module decode(
 	input wire clk,
@@ -44,6 +47,7 @@ logic [19:0] UJ_imm;
 // Run PCPlus4D straight through decode stage
 always @(posedge clk) begin
 	PCPlus4D_out <= PCplus4D;
+	PCD_out <= PCD;
 
 	// Breakdown Module
 	Breakdown breakdown (
@@ -80,6 +84,7 @@ always @(posedge clk) begin
 		.ImmExtD(ImmExtD)
 	);
 
+	// if m stall hold state. If no operation, pass through
 
 end
 
