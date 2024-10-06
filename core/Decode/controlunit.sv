@@ -1,11 +1,8 @@
+`default_nettype none
 module ControlUnit (
-    input logic [6:0] opcode,
+    input logic [6:0] op,
     input logic [2:0] funct3,
     input logic [6:0] funct7,
-    input logic [11:0] I_imm,
-    input logic [6:0] SB_imm1,
-    input logic [4:0] SB_imm2,
-    input logic [19:0] UJ_imm,
 
     output logic RegWriteD,
     output logic [1:0] ResultSrcD,
@@ -14,27 +11,12 @@ module ControlUnit (
     output logic BranchD,
     output logic [2:0] ALUControlD,
     output logic ALUSrcD,
-    output logic [31:0] ImmExtD
-);
-
-// Breakdown module
-Breakdown breakdown (
-    .instruction(instruction),
-    .opcode(opcode),
-    .rs1(rs1),
-    .rs2(rs2),
-    .rd(rd),
-    .funct3(func3),
-    .funct7(funct7),
-    .I_imm(I_imm),
-    .SB_imm1(SB_imm1),
-    .SB_imm2(SB_imm2),
-    .UJ_imm(UJ_imm)
+    output logic [2:0] immSrcD
 );
 
 // Control signals for each instruction
 always_comb begin
-    case (opcode)
+    case (op)
         // R-type instructions
         7'b0110011:
             begin
@@ -44,7 +26,7 @@ always_comb begin
                 JumpD = 0;
                 BranchD = 0;
                 ALUSrcD = 0;
-                ImmExtD = 32'bxx;
+                immSrcD = 3'bxxx;
             end
 
             case (func3)
@@ -83,9 +65,9 @@ always_comb begin
                 ResultSrcD = 2'b00;
                 MemWriteD = 0;
                 JumpD = 0;
-                BranchD = 1;
+                BranchD = 0;
                 ALUSrcD = 1;
-                ImmExtD = {{20{I_imm[11]}}, I_imm};
+                immSrcD = 3'b000;
             end
 
             case (funct3)
@@ -103,11 +85,7 @@ always_comb begin
                     ALUControlD = `ALU_AND;
                 3'b001:
                     ALUControlD = `ALU_SLL;
-                    ImmD = {{27{instruction[4]}}, I_imm[4:0]};
                 3'b101:
-                    begin
-                        ImmD = {{27{instruction[4]}}, I_imm[4:0]}; 
-                    end
                     case (funct7)
                         7'b0000000:
                             ALUControlD = `ALU_SRL;
@@ -120,13 +98,12 @@ always_comb begin
         7'b0100011:
             begin
                 RegWriteD = 0;
-                ResultSrcD = 2'bxx;
+                ResultSrcD = 2'b00;
                 MemWriteD = 1;
                 JumpD = 0;
                 BranchD = 0;
-                ALUControlD = `ALU_ADD;
-                ALUSrcD = 0;
-                ImmExtD = {{20{SB_imm1[6]}}, SB_imm1[6:0], SB_imm2[4:0]};
+                ALUSrcD = 1;
+                immSrcD = 3'b001;
             end
 
         // B-type instructions 
@@ -137,9 +114,8 @@ always_comb begin
                 MemWriteD = 0;
                 JumpD = 0;
                 BranchD = 1;
-                ALUControlD = `ALU_COMP;
                 ALUSrcD = 0;
-                ImmExtD = {{19{SB_imm2[6]}}, SB_imm1[6], SB_imm2[0], SB_imm1[5:0], SB_imm2[4:1], 1'b0};
+                immSrcD = 3'b010;
             end
 
             case (func3)
@@ -160,27 +136,27 @@ always_comb begin
         // JAL
         7'b1101111:
             begin
-                RegWriteD = 0;
-                ResultSrcD = 2'b00;
+                RegWriteD = 1;
+                ResultSrcD = 2'b01;
                 MemWriteD = 0;
                 JumpD = 1;
                 BranchD = 0;
                 ALUControlD = `ALU_ADD;
                 ALUSrcD = 1;
-                ImmExtD = {{12{UJ_imm[19]}},UJ_imm[7:0],UJ_imm[8], UJ_imm[18:9], 1'b0};
+                immSrcD = 3'b011;
             end
 
         // JALR
         7'b1100111:
             begin
-                RegWriteD = 0;
-                ResultSrcD = 2'b00;
+                RegWriteD = 1;
+                ResultSrcD = 2'b01;
                 MemWriteD = 0;
                 JumpD = 1;
                 BranchD = 0;
                 ALUControlD = `ALU_ADD;
-                ALUSrcD = `ALU_SRC_IMM;
-                ImmExtD = I_imm[11:0];
+                ALUSrcD = 1;
+                immSrcD = 3'b000;
             end
 
         // LUI
@@ -193,7 +169,7 @@ always_comb begin
                 BranchD = 0;
                 ALUControlD = 3'bxxx;
                 ALUSrcD = 1'bx;
-                ImmExtD = UJ_imm[19:0];
+                immSrcD = 3'b100;
             end
 
         // AUIPC
@@ -201,14 +177,27 @@ always_comb begin
             begin
                 RegWriteD = 1;
                 ResultSrcD = 2'b00;
-                MemWriteD = 0;
+                MemWriteD = 0;I
                 JumpD = 0;
                 BranchD = 0;
                 ALUControlD = `ALU_ADD;
                 ALUSrcD = 1;
-                ImmExtD = UJ_imm[19:0];
+                immExtD = 3'b100;
+            end
+        
+        default: 
+            begin
+                RegWriteD = 1'bx;
+                ResultSrcD = 2'bxx;
+                MemWriteD = 1'bx;
+                JumpD = 1'bx;I
+                BranchD = 0;
+                ALUControlD = 3'bxxx;
+                ALUSrcD = 1'bx;
+                immSrcD = 3'bxxx;
             end
     endcase
 end
 
 endmodule
+`default_nettype wire

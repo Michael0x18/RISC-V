@@ -1,0 +1,9 @@
+*.mpf
+*.mti
+transcript
+*/transcript
+*/*/transcript
+work/
+*.qpg
+*.qtl
+
