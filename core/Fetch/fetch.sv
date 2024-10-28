@@ -86,6 +86,8 @@ wire branch_prediction_extra;
 // Otherwise -- No
 assign branch_prediction_extra = opcode == 1101111 | ((opcode == 1100011) ? bpout : 1'b0);
 wire imm;
+
+// Only JAL uses this j_imm
 assign imm = opcode == 1101111 ? j_imm : b_imm;
 
 assign branch_target = imm + PC_f;
@@ -132,14 +134,11 @@ end
 logic[31:0] next_addr_tmp;
 assign next_addr = {32{rst_n}} & next_addr_tmp;
 
-// TODO TODO TODO set branch target address based on decoded immediate values
-// and curr_addr
-
 wire[31:0] j_imm;
 wire[31:0] b_imm;
 
-assign b_imm = {{12{instruction[31]}},instruction[7],instruction[30:25],instruction[11:0],1'b0};
-assign j_imm = {{12{instruction[31]}},instruction[19:12],instruction[20],instruction[30:21],1'b0};
+assign b_imm = { {20{instruction[31]}}, instruction[7], instruction[30:25], instruction[11:8], 1'b0 };
+assign j_imm = { {12{instruction[31]}}, instruction[19:12], instruction[20], instruction[30:21], 1'b0 };
 
 // Fetch-stage combinational logic
 always_comb begin
