@@ -74,8 +74,8 @@ module icacheline(
 			// Just read this out
 			data_out <= entries[r_addr[9:5]];
 			hit <= // To determine if we hit the cache or not
-				valid[r_addr[9:5]] & // Cache line must be valid and
-				tags[r_addr[9:5]] == r_addr[31:10];
+				valid[r_addr[9:5]] ? // Cache line must be valid and
+				tags[r_addr[9:5]] == r_addr[31:10] : 'b0;
 		end
 	end
 
@@ -86,9 +86,11 @@ module icacheline(
 			valid <= 'b0;
 		end else if (we) begin
 			// Insert tag
+			$display("write");
 			tags[w_addr[9:5]] <= w_addr[31:10];
 			// Insert data
 			entries[w_addr[9:5]] <= data_in;
+			valid[w_addr[9:5]] <= 1'b1;
 		end
 	end
 
@@ -125,6 +127,13 @@ module icache(
 );
 
 /**
+ * Captured write address
+**/
+reg[31:0] write_addr;
+logic	ic0_we;
+logic	ic1_we;
+
+/**
  * Enumerated states for the instruction cache
  * READY	--	Cache has been hit. It is actively returning data.
  * STALL	--  Cache has been missed. It is waiting on the next level cache.
@@ -145,20 +154,20 @@ icache_state_t icache_state_next;
 // addressable in four byte increments.
 wire[255:0] tmp_out;
 
+wire[31:0] shifted_out;
+
 // Need to cut down a 256 bit (32 byte) cache line output into a 32 bit (four
 // byte) output to send to the core.
 icache_chainshifter ics(
 	.in(tmp_out),
-	.shift(addr[4:2]),
-	.out(out)
+	.shift(write_addr[4:2]), // changed from addr
+	.out(shifted_out)
 );
 
-/**
- * Captured write address
-**/
-reg[31:0] write_addr;
-logic	ic0_we;
-logic	ic1_we;
+logic tmp_stall;
+
+assign out = tmp_stall ? 32'h600DBEEF : shifted_out;
+
 
 wire ic0_hit;
 wire ic1_hit;
@@ -166,7 +175,9 @@ wire ic1_hit;
 wire[255:0] ic0_out;
 wire[255:0] ic1_out;
 
+// This is the data that comes straight from the level two cache
 wire[255:0] L2_out;
+assign L2_out  = L2_block_read;
 
 icacheline ic0(
 	.clk(clk),
@@ -183,7 +194,7 @@ icacheline ic1(
 	.rst_n(rst_n),
 	.r_addr(addr),
 	.w_addr(write_addr),
-	.we(ic0_we),
+	.we(ic1_we),
 	.hit(ic1_hit),
 	.data_out(ic1_out),
 	.data_in(L2_out)
@@ -194,6 +205,13 @@ icacheline ic1(
 // 1 -> cache line 1 is newest
 reg[31:0] LRU;
 
+//always @(posedge clk, negedge rst_n) begin
+//	if(!rst_n)
+//		stall <= 1'b1;
+//	else
+//		stall <= tmp_stall;
+//end
+assign stall = tmp_stall;
 
 // High if the LRU subsystem should update the LRU bits this cycle. It can
 // either take them from the write or read cycles.
@@ -244,7 +262,7 @@ always @(posedge clk, negedge rst_n) begin
 		// wait until the required code makes it into the fetch stage before
 		// executing anything (it will run a stream of No-Ops until then)
 		write_addr <= 32'b0;
-	end else if (~stall) begin
+	end else if (~tmp_stall) begin
 		// If the core is not currently stalled, continuously capture the
 		// input address and store it in the write_addr register. This ensures
 		// that if the core does stall, we immediately know what address it
@@ -281,7 +299,7 @@ always_comb begin
 		// Cache is currently in the READY state. This means it is producing
 		// output for use in the fetch stage of the core.
 		// Stall must be low, because the core is not stalled
-		stall = 1'b0;
+		tmp_stall = 1'b0;
 		// Default to not reading from the Level two cache. This frees up
 		// a read port.
 		L2_read_en = 1'b0;
@@ -295,7 +313,7 @@ always_comb begin
 			// matching tag. This means we missed the cache.
 			// Assert stall high because we do not want random data to proceed
 			// to the fetch stage
-			stall = 1'b1;
+			tmp_stall = 1'b1;
 			// Move to the stall state
 			icache_state_next = STALL;
 			// May as well assert this early. This saves a clock cycle - not
@@ -316,7 +334,7 @@ always_comb begin
 		// Hold the stall signal high. This ensures that the fetch stage does
 		// not trust the output of this functional unit until all required
 		// data is present.
-		stall = 1'b1;
+		tmp_stall = 1'b1;
 		// Hold L2_read_en
 		L2_read_en = 1'b1;
 		// Don't update the LRU
@@ -347,11 +365,19 @@ always_comb begin
 		L2_read_en = 1'b0;
 		// Cache is currently taking a cycle to update. Continue to hold
 		// stall.
-		stall = 1'b1;
+		tmp_stall = 1'b1;
 		// Move to READY state during the next clock cycle
 		icache_state_next = READY;
 	end
 	endcase
+end
+
+always @(posedge clk, negedge rst_n) begin
+	if(!rst_n) begin
+		icache_state <= STALL;
+	end else begin
+		icache_state <= icache_state_next;
+	end
 end
 
 endmodule

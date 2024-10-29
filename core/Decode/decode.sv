@@ -11,33 +11,26 @@ module decode(
 	input logic clk,
 	input logic rst_n,
 
-	input logic[31:0] InstrF, // raw instruction binary, comes from fetch stage
-	input logic[31:0] PCF, // Current program counter, from fetch
+	input logic[31:0] InstrF,	// raw instruction binary, comes from fetch stage
+	input logic[31:0] PCF,		// Current program counter, from fetch
 	input logic[31:0] PCplus4F, // Current program counter, plus 4 (next instruction w/o branch), from fetch
-	input logic[31:0] WD3, // Data to write, from write back stage
-	input logic WE3, // Write enable, from write back stage
-	input logic[4:0] A3, // Desgination register, from write back stage
-	input logic RegWriteW, // Write enable, from write back stage
-	input logic branch_taken, // Branch taken signal, from fetch stage
-	input logic branch_target, // Branch target address, from fetch stage
-	input logic mstall_n, // Stall signal
+	input logic branch_taken,	// Branch taken signal, from fetch stage
+	input logic branch_target,	// Branch target address, from fetch stage
+	input logic mstall_n,		// Stall signal
 
-	output logic RegWriteD,	// Write enable for register file
-	output logic[1:0] ResultSrcD, // Source for result mux at the write back stage (00 = ALU, 01 = memory, 10 = PC+4)
-	output logic MemWriteD, // Memory write enable
-	output logic JumpD,	// Jump enable
-	output logic BranchD,	// Branch enable
+	output logic RegWriteD,		// Write enable for register file
+	output logic[1:0] ResultSrcD,// Source for result mux at the write back stage (00 = ALU, 01 = memory, 10 = PC+4)
+	output logic MemWriteD,		// Memory write enable
+	output logic JumpD,			// Jump enable
+	output logic BranchD,		// Branch enable
 	output logic[2:0] ALUControlD,	// ALU control signal
-	output logic ALUSrcD,	// ALU source signal (0 = register, 1 = immediate)
+	output logic ALUSrcD,		// ALU source signal (0 = register, 1 = immediate)
 
-	output reg[31:0] RD1,	// Destination register 1
-	output reg[31:0] RD2,	// Destination register 2
-	output reg[31:0] PCD,	// Program counter
-	output reg[4:0] Rs1D,	
-	output reg[4:0] Rs2D,
-	output reg[4:0] RdD,
-	output reg[31:0] ImmExtD,
-	output reg[31:0] PCPlus4D
+	output reg[31:0] RD1,		// Destination register 1
+	output reg[31:0] RD2,		// Destination register 2
+	output reg[31:0] PCD,		// Program counter
+	output reg[31:0] ImmExtD,	// Extended immediate value
+	output reg[31:0] PCPlus4D	// PC plus 4
 );
 
 	logic [6:0] op;
@@ -46,6 +39,11 @@ module decode(
 	logic [2:0] immSrc;
 
 	// If stall hold state.
+	
+	reg[31:0]	InstrF_reg;
+	reg[31:0]	PCF_reg;
+	reg[31:0]	PCplus4F_reg;
+	reg			
 	
 	// If no operation, pass through
 

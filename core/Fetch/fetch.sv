@@ -35,10 +35,19 @@ module fetch(
 
 	// Pass this stuff through to the L1I cache
 	input	wire[255:0]	L2_block_read,
-	input	wire[31:0]	L2_addr_read,
-	input	wire		L2_stall
+	output	wire[31:0]	L2_addr_read,
+	input	wire		L2_stall,
+	output  wire		L2_read_en
 );
 
+reg mstall_flop;
+always @(posedge clk, negedge rst_n) begin
+	if(!rst_n) begin
+		mstall_flop <= 1'b0;
+	end else begin
+		mstall_flop <= mstall;
+	end
+end
 
 // Address of current instruction being processed by the fetch stage.
 // This is the captured version of the previous clock's next_addr
@@ -61,7 +70,7 @@ wire bpout;
 bpcache bp(
 	.clk(clk),	// Share clk
 	.rst_n(rst_n), // Share rst
-	.addr(next_addr), // Pass through output of next instruction
+	.addr(next_addr[7:0]), // Pass through output of next instruction
 	.branch(bpout),
 
 	// Pass through the rest of the inputs to allow the write back stage to
@@ -69,6 +78,10 @@ bpcache bp(
 	// saying everything is "weak not taken"
 	.w_addr(bp_w_addr), .did_branch(bp_did_branch), .we(bp_we)
 );
+
+// Temp values for decoded immedates
+wire[31:0] j_imm;
+wire[31:0] b_imm;
 
 // Instruction data from the instruction cache
 wire[31:0] instruction_ic;
@@ -103,7 +116,8 @@ icache ic(
 	// Data lines that run out to the level 2 cache
 	.L2_block_read(L2_block_read),
 	.L2_addr_read(L2_addr_read),
-	.L2_stall(L2_stall)
+	.L2_stall(L2_stall),
+	.L2_read_en(L2_read_en)
 );
 
 // Flop the next address of the instruction; it's a combinational signal
@@ -134,8 +148,7 @@ end
 logic[31:0] next_addr_tmp;
 assign next_addr = {32{rst_n}} & next_addr_tmp;
 
-wire[31:0] j_imm;
-wire[31:0] b_imm;
+
 
 assign b_imm = { {20{instruction[31]}}, instruction[7], instruction[30:25], instruction[11:8], 1'b0 };
 assign j_imm = { {12{instruction[31]}}, instruction[19:12], instruction[20], instruction[30:21], 1'b0 };
@@ -159,7 +172,7 @@ always_comb begin
 		// is the next instruction address
 		next_addr_tmp=mispredict_override_addr;
 		// Override that with the actual address the branch went to
-	end else if (istall | mstall) begin
+	end else if (istall | mstall_flop) begin
 		// If either the instruction cache or the data cache experiences
 		// a miss, a stall will occur. In the case of an icache miss, feed
 		// no-ops into the pipeline to let the backend run ahead of the
