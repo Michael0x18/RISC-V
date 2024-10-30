@@ -188,8 +188,42 @@ initial begin
 		$stop();
 	end
 	
-
+	// Test reset condition of the CPU
 	
+	// First need to reset all the control signals so we can observe the
+	// passive state. It should just go from zero anyway, and we can just
+	// block until we hit a certain address;
+	
+	L2_data = 256'h90909090_90909090_90909090_90909090_90909090_90909090_90909090_FFFFFFFF; // Give it just all ones
+
+	rst_n = 1'b0; // RESET
+
+	@(negedge clk);
+
+	// Release reset signal
+	rst_n = 1'b1;
+
+	i=0;
+	// Wait while nop
+	while(instruction === NOP) begin
+		i = i + 1;
+		@(negedge clk);
+		if ( i > 100 ) begin
+			$display("Frontend did not recover from a RESET signal");
+			$stop;
+		end
+	end
+
+	if(instruction !== 32'hFFFFFFFF) begin
+		$display("Did not correctly reset to zero");
+		$stop();
+	end
+
+	// TODO test the branch predictor
+	// I'll let kenneth do this one
+	// It should work, since it has its own testbench, however it still needs
+	// to be tested as a part of the entire stack
+
 	$display("Yahoo! All tests passed.");
 
 	$stop();
