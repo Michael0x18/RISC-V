@@ -5,7 +5,7 @@
  - Fully pipelined, fully scalar processor
 	 + Planned Dual issue
 	 + Planned basic instruction reordering
- - Zero bubble branch prediction
+ - Zero latency branch prediction
 	 + Planned BTB and return stack
  - Caching subsystem to hide memory latency
 	 + Split L1i and L1d caches
