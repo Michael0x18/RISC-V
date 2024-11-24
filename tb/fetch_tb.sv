@@ -226,7 +226,7 @@ initial begin
 
 	$display("Yahoo! All tests passed.");
 
-	$stop();
+	//$stop();
 	
 
 end
