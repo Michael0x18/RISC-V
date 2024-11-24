@@ -156,7 +156,7 @@ localparam ALU_SLTU = 4'b1010; // Set less than unsigned
 	 * Just break them out with simple assign statements (Except RS1)
 	 */
 	assign RD = instruction[11:7];
-	assign RS1 = (opcode == OP_JAL) ? 5'b0 : instruction[19:15]; // Special exception cause for this we want it to be x0 always
+	assign RS1 = (opcode == OP_LUI) ? 5'b0 : instruction[19:15]; // Special exception cause for this we want it to be x0 always
 	assign RS2 = instruction[24:20];
 	assign opcode = instruction[6:0];
 	assign funct3 = instruction[14:12];
