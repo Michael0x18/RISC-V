@@ -7,8 +7,8 @@
 
 `default_nettype none
 module decode(
-	input logic clk,
-	input logic rst_n,
+	input wire clk,
+	input wire rst_n,
 
 	input wire[31:0] InstrF,	// raw instruction binary, comes from fetch stage/
 	input wire[31:0] PCF,		// Current program counter, from fetch/
@@ -242,13 +242,17 @@ localparam ALU_SLTU = 4'b1010; // Set less than unsigned
 		OP_ARITH, OP_ARITHI: begin
 			AS2 = ~opcode[5]; // Identify OP_ARITHI
 			case (funct3)
-			3'h0: alu_op = funct7[1] ? ALU_SUB : ALU_ADD;
+			3'h0: alu_op = funct7[5] ? ALU_SUB : ALU_ADD;
 			3'h4: alu_op = ALU_XOR;
-			// TODO fill in the rest of this. This should be all that's left
-			// for decode
+			3'h6: alu_op = ALU_OR;
+			3'h7: alu_op = ALU_AND;
+			3'h1: alu_op = ALU_SLL;
+			3'h5: alu_op = funct7[5] ? ALU_SRA : ALU_SRL;
+			3'h2: alu_op = ALU_SLT;
+			3'h3: alu_op = ALU_SLTU;
 
-			// Over here, do the ALU operations for arithmetic instructions.
-			// Both immediate and non immediate varieties are done here.
+			default:
+				alu_op = ALU_INVL;
 
 			endcase
 		end

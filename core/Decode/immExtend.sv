@@ -1,12 +1,12 @@
 `default_nettype none
 
 module immExtend(
-    input logic [31:0] instr,
-    input logic [2:0] immSrc,
+    input wire [31:0] instr,
+    input wire [2:0] immSrc,
     output logic [31:0] immext
 );
 
-always_comb
+always_comb begin
     case(immSrc)
         // I-type
         3'b000: immext = {{20{instr[31]}}, instr[31:20]};
@@ -25,6 +25,6 @@ always_comb
 
         default: immext = 32'bx; // undefined
     endcase
-
+end
 endmodule
 `default_nettype wire
