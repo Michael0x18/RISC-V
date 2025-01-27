@@ -37,9 +37,17 @@ module fetch(
 	input	wire[255:0]	L2_block_read,
 	output	wire[31:0]	L2_addr_read,
 	input	wire		L2_stall,
-	output	wire		L2_re
+	output  wire		L2_read_en
 );
 
+reg mstall_flop;
+always @(posedge clk, negedge rst_n) begin
+	if(!rst_n) begin
+		mstall_flop <= 1'b0;
+	end else begin
+		mstall_flop <= mstall;
+	end
+end
 
 // Address of current instruction being processed by the fetch stage.
 // This is the captured version of the previous clock's next_addr
@@ -71,6 +79,10 @@ bpcache bp(
 	.w_addr(bp_w_addr), .did_branch(bp_did_branch), .we(bp_we)
 );
 
+// Temp values for decoded immedates
+wire[31:0] j_imm;
+wire[31:0] b_imm;
+
 // Instruction data from the instruction cache
 wire[31:0] instruction_ic;
 // Opcode - used to do early decode of branch instructions
@@ -87,6 +99,8 @@ wire branch_prediction_extra;
 // Otherwise -- No
 assign branch_prediction_extra = opcode == 1101111 | ((opcode == 1100011) ? bpout : 1'b0);
 wire imm;
+
+// Only JAL uses this j_imm
 assign imm = opcode == 1101111 ? j_imm : b_imm;
 
 assign branch_target = imm + PC_f;
@@ -103,7 +117,7 @@ icache ic(
 	.L2_block_read(L2_block_read),
 	.L2_addr_read(L2_addr_read),
 	.L2_stall(L2_stall),
-	.L2_read_en(L2_re)
+	.L2_read_en(L2_read_en)
 );
 
 // Flop the next address of the instruction; it's a combinational signal
@@ -134,14 +148,10 @@ end
 logic[31:0] next_addr_tmp;
 assign next_addr = {32{rst_n}} & next_addr_tmp;
 
-// TODO TODO TODO set branch target address based on decoded immediate values
-// and curr_addr
 
-wire[31:0] j_imm;
-wire[31:0] b_imm;
 
-assign b_imm = {{12{instruction[31]}},instruction[7],instruction[30:25],instruction[11:0],1'b0};
-assign j_imm = {{12{instruction[31]}},instruction[19:12],instruction[20],instruction[30:21],1'b0};
+assign b_imm = { {20{instruction[31]}}, instruction[7], instruction[30:25], instruction[11:8], 1'b0 };
+assign j_imm = { {12{instruction[31]}}, instruction[19:12], instruction[20], instruction[30:21], 1'b0 };
 
 // Fetch-stage combinational logic
 always_comb begin
@@ -162,7 +172,7 @@ always_comb begin
 		// is the next instruction address
 		next_addr_tmp=mispredict_override_addr;
 		// Override that with the actual address the branch went to
-	end else if (istall | mstall) begin
+	end else if (istall | mstall_flop) begin
 		// If either the instruction cache or the data cache experiences
 		// a miss, a stall will occur. In the case of an icache miss, feed
 		// no-ops into the pipeline to let the backend run ahead of the
