@@ -35,8 +35,9 @@ module fetch(
 
 	// Pass this stuff through to the L1I cache
 	input	wire[255:0]	L2_block_read,
-	input	wire[31:0]	L2_addr_read,
-	input	wire		L2_stall
+	output	wire[31:0]	L2_addr_read,
+	input	wire		L2_stall,
+	output	wire		L2_re
 );
 
 
@@ -61,7 +62,7 @@ wire bpout;
 bpcache bp(
 	.clk(clk),	// Share clk
 	.rst_n(rst_n), // Share rst
-	.addr(next_addr), // Pass through output of next instruction
+	.addr(next_addr[7:0]), // Pass through output of next instruction
 	.branch(bpout),
 
 	// Pass through the rest of the inputs to allow the write back stage to
@@ -101,7 +102,8 @@ icache ic(
 	// Data lines that run out to the level 2 cache
 	.L2_block_read(L2_block_read),
 	.L2_addr_read(L2_addr_read),
-	.L2_stall(L2_stall)
+	.L2_stall(L2_stall),
+	.L2_read_en(L2_re)
 );
 
 // Flop the next address of the instruction; it's a combinational signal

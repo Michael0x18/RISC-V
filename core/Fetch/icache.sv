@@ -225,7 +225,8 @@ always @(posedge clk, negedge rst_n) begin
 			// accessed
 			// If ic0 hits, slap a 1 into there to indicate that ic1 is now
 			// the oldest. Otherwise put zero.
-			LRU[write_addr[9:5]] <= ic0_hit;
+			LRU[write_addr[9:5]] <= ic0_hit; // Note: write_addr gets read_addr
+			// Unless we miss. Then, don't update this at all.
 		end
 	end
 end
